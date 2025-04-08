@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Image Overlay Tutorial - Leaflet</title>
+
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="docs/images/favicon.ico"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+    />
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster-src.js"></script>
+
+
+    <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" 
+    type="text/css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Kablammo&family=Orbitron&family=Lobster&display=swap" rel="stylesheet">
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      .leaflet-container {
+        height: 400px;
+        width: 800px;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .container {
+        display: flex;
+      }
+      .fixed {
+        width: 800px;
+      }
+      .flex-item {
+        min-width: 280px;
+        max-width: 300px;
+        background-image: linear-gradient(to bottom right, #8707a180, #20207880, #05aaae80);
+      }
+      .gps_ring {
+        border: 3px solid #999;
+        -webkit-border-radius: 30px;
+        height: 18px;
+        width: 18px;
+        -webkit-animation: pulsate 1s ease-out;
+        -webkit-animation-iteration-count: infinite;
+        /*opacity: 0.0*/
+      }
+      .p1 {
+        font-family: "Audiowide", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+      }
+      .orbitron {
+  font-family: "Orbitron", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.lobster {
+  font-family: "Lobster", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.kablammo {
+  font-family: "Kablammo", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "MORF" 0;
+}
+.audiowide {
+  font-family: "Audiowide", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+      .p2 {
+        font-family: "Lucida Handwriting", Arial, Helvetica;
+      }
+      @keyframes pulsate {
+        0% {
+          -webkit-transform: scale(0.1, 0.1);
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          -webkit-transform: scale(1.2, 1.2);
+          opacity: 0;
+        }
+      }
+      img {
+        filter: none;
+        /* filter: brightness(0) saturate(100%) invert(70%) sepia(97%)
+          saturate(925%) hue-rotate(153deg) brightness(102%) contrast(102%); */
+        /* width: 400px; */
+      }
+      .image1 {
+        width: 200px;
+        height: 200px;
+      }
+      .glow {
+        border-radius: 14px;
+        margin: 140px;
+        padding: 20px;
+        box-shadow: rgba(72, 135, 202, 0.8) 0 0 90px 33px;
+      }
+
+      .marker-cluster-small {
+  background-color: #69f1e4 !important;
+}
+
+.marker-cluster-small div {
+  background-color: #f69e40 !important;
+  color: #fff !important;
+}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="fixed" id="map"></div>
+      <div class="flex-item" id="sidebar"><p>Playing with some fonts here:</p><p class="lobster" style="font-size: 30px;">Hint: Start with Georgia!</p><p class="audiowide">This will always have some information...</p> <p class="orbitron">Probably to start, there will be a directory of all sites or some summary of the toolkit.</p> <p class="kablammo">The background image will be one of the backgrounds from the flyer </p></div>
+    </div>
+
+    <script type="text/javascript" src="stop.js"></script>
+    <script type="text/javascript" src="contig.js"></script>
+    <script type="text/javascript" src="GeorgiaPoints.js"></script>
+    <script>
+      const map = L.map("map").setView([37.8, -96], 9);
+
+      const osm = L.tileLayer(
+        "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}",
+        {
+          minZoom: 4,
+          maxZoom: 15,
+          attribution:
+            '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          ext: "png",
+        }
+      ).addTo(map);
+
+      const latLngBounds = L.latLngBounds([
+        [24.826556302942801, -124.8628512897066],
+        [50.560487478646465, -66.85669009386239],
+      ]);
+
+      map.fitBounds(latLngBounds);
+
+      function style(feature) {
+        return {
+          color: "#DB6340ff", //cinnabar-2
+          weight: 5,
+          opacity: 0.4,
+          fillColor: false,
+          fillOpacity: 0,
+        };
+      }
+
+      function pop(feature) {
+        if (map.getZoom() > 9) {
+          return {
+            color: "#1A8B91ff", //cinnabar-2
+            weight: 5,
+            opacity: 0.4,
+            fillColor: false,
+            fillOpacity: 0,
+          };
+        } else {
+          return {
+            color: "#1A8B91ff", //cinnabar-2
+            weight: 5,
+            opacity: 0.4,
+            fillColor: "#3D615Fff",
+            fillOpacity: 0.5,
+            // resetHighlight;
+          };
+        }
+      }
+
+      /* global statesData */
+
+      var states = L.geoJson(statesData, {
+        style,
+      }).addTo(map);
+
+      var visit = L.geoJson(stops, {
+        style: pop,
+        onEachFeature,
+      }).addTo(map);
+
+      function highlightFeature(e) {
+        const layer = e.target;
+        if (map.getZoom() < 10) {
+          layer.setStyle({
+            weight: 5,
+            color: "#C2EDE8ff",
+            dashArray: "",
+            fillOpacity: 0.7,
+          });
+        }
+      }
+
+      function resetHighlight(e) {
+        visit.resetStyle(e.target);
+      }
+
+      function zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+      }
+
+      function onEachFeature(feature, layer) {
+        layer.on({
+          mouseover: highlightFeature,
+          mouseout: resetHighlight,
+          click: zoomToFeature,
+        });
+
+        map.on("zoomend", function () {
+          console.log(map.getZoom());
+        });
+      }
+
+      function onEachPoint(feature, layer) {
+        let popupContent = `<center><img src= ${feature.properties.image} alt="Trulli" width="240" height=100%></center>`;
+        layer.bindPopup(popupContent);
+        var content = `<center><p class="audiowide">Introducing</p>
+      <h2>${feature.properties.name}</h2> <p>${feature.properties.about}</p>
+          <p>${feature.properties.address1}<br>${feature.properties.address2}<br><br><b>contact: </b>${feature.properties.contact}</p>`;
+        layer.on("popupopen", function (feature) {
+          document.getElementById("sidebar").innerHTML = content;
+        });
+      }
+
+      map.on("popupopen", function (e) {
+        // find the pixel location on the map where the popup anchor is
+        var px = map.project(e.popup._latlng);
+        // find the height of the popup container, divide by 2 to centre, subtract from the Y axis of marker location
+        px.y -= e.popup._container.clientHeight / 2;
+        // pan to new center
+        map.panTo(map.unproject(px), { animate: true });
+      });
+
+      map.on("popupclose", function (e) {
+        document.getElementById("sidebar").innerHTML = `<p class="audiowide">Back to the information panel...</p> <p class="orbitron">Probably to start, there will be a directory of all sites or some summary of the toolkit.</p> <p class="kablammo">The background image will be one of the backgrounds from the flyer </p>`;
+      });
+
+      ////////////////////////////////////////
+
+      ///////////////////////////////////////////
+
+      var GeorgiaSites = L.geoJSON(GeorgiaPoints, {
+        onEachFeature: onEachPoint,
+
+        pointToLayer(feature, latlng) {
+          return L.marker(latlng, {
+            icon: L.icon({
+              iconUrl: feature.properties.iconUrl,
+              iconSize: [32, 37],
+              iconAnchor: [16, 37],
+              popupAnchor: [0, -28],
+            }),
+          });
+        },
+      }); //.addTo(map);
+
+      var GeorgiaMarkers = new L.FeatureGroup();
+
+      GeorgiaMarkers.addLayer(GeorgiaSites);
+
+      var markers = L.markerClusterGroup({
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+      });
+
+      markers.addLayer(GeorgiaMarkers);
+
+      markers.on("clusterclick", function (a) {
+        a.layer.zoomToBounds({ padding: [40, 40] });
+      });
+
+      map.on("zoomend", function () {
+        if (map.getZoom() < 6) {
+          map.removeLayer(markers);
+        } else {
+          map.addLayer(markers);
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<!-- 
+// var cssIcon = L.divIcon({
+  //   // Specify a class name we can refer to in CSS.
+  //   className: "css-icon",
+  //   html: '<div class="gps_ring"></div>',
+  //   // Set marker width and height
+  //   iconSize: [33, 33],
+  // });
+
+  // var ellips = L.circle([33.75985415597732, -84.39825755367686], {
+  //   color: "cyan",
+  //   fillColor: "#f03",
+  //   fillOpacity: 0.5,
+  //   radius: 5000,
+  // }).bindPopup(
+  //   "<h2>Atlanta, Georgia</h2><h5>(secrets)</h5> <p>Approximately <b>stuff</b> people live in this census tract.</p>  <p>Overall, <b>number%</b> (other studd) of the population are male and <b>wowwee%</b> (shhh) of the population are female.</p> <p>The median age is <b>look</b>.</p>"
+  // );
+  
+   // visit.eachLayer((layer) => {
+      //   layer.bindPopup(layer.feature.properties.STATE_NAME);
+      // });
+
+      // GeorgiaMarkers.eachLayer((layer) => {
+      //   layer.bindPopup(layer.feature.properties.description);
+      // });
+      // const myCustomColour = '#5f93ed'
+        
+      //   const markerHtmlStyles = `
+      //       background-color: ${myCustomColour};
+      //       width: 15px;
+      //       height: 15px;
+      //       font-size:15px;
+      //       text-align:center;
+      //       display: block; 
+      //   `
+        
+                
+      //   function thing(ct) {
+      //       return L.divIcon({
+      //           className: "box",
+      //           iconAnchor: [12, 25],
+      //           labelAnchor: [-6, 0],
+      //           popupAnchor: [0, -15],
+      //           html: `<img src="adinkrahene-small.png" alt="your-image-alt-text">`
+      //       })
+      //   }
+               
+      //   L.marker([51.51, -0.09], {
+      //       icon: thing("hello")
+      //   }).addTo(map)
+      //       .bindPopup('divIcon CSS3 popup. <br> Supposed to be easily stylable.');
+
+  
+        // if (feature.properties && feature.properties.iconUrl){
+      //   feature.setIcon(new L.Icon({
+      //         iconUrl: feature.properties.iconUrl,
+      //         iconSize: [32, 37],
+      //         iconAnchor: [16, 37],
+      //     }));
+      //   }
+  
+      //   if (e.properties && e.properties.icon && e.geometryType == "Point" ){
+    //      e.layer.setIcon(L.Icon.extend(
+    //      {iconUrl: e.properties.icon}
+    //  ));
+    // }
+    
+  -->
